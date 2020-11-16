@@ -17,6 +17,8 @@
 
 namespace Obs;
 
+use Hyperf\Guzzle\ClientFactory;
+use Hyperf\Guzzle\CoroutineHandler;
 use Obs\Log\ObsLog;
 use Obs\Internal\Common\SdkCurlFactory;
 use Obs\Internal\Common\SdkStreamHandler;
@@ -290,22 +292,20 @@ class ObsClient
 		    $this -> pathStyle = true;
 		}
 				
-		$handler = self::choose_handler($this);
-		
-		$this -> httpClient = new Client(
-				[
-						'timeout' => 0,
-						'read_timeout' => $this -> socketTimeout,
-						'connect_timeout' => $this -> connectTimeout,
-						'allow_redirects' => false,
-						'verify' => $this -> sslVerify,
-						'expect' => false,
-						'handler' => HandlerStack::create($handler),
-						'curl' => [
-								CURLOPT_BUFFERSIZE => $this -> chunkSize
-						]
-				]
-		);
+	        $ClientFactory = make(ClientFactory::class);
+	        $options = [
+	            'timeout' => 0,
+	            'read_timeout' => $this->socketTimeout,
+	            'connect_timeout' => $this->connectTimeout,
+	            'allow_redirects' => false,
+	            'verify' => $this->sslVerify,
+	            'expect' => false,
+	            'handler' => new CoroutineHandler(),
+	            'curl' => [
+	                CURLOPT_BUFFERSIZE => $this->chunkSize
+	            ]
+	        ];
+	        $this->httpClient = $ClientFactory->create($options);
 		
 	}
 	
